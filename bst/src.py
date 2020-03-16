@@ -49,6 +49,13 @@ class BST(ty.Generic[T]):
             return BST()
         return self._right
 
+    @property
+    def height(self):
+        if self.empty:
+            return 0
+        else:
+            return 1 + max(self.left.height, self.right.height)
+
     def __post_init__(self):
         if self._left is not None and self._left.empty:
             self._left = None

@@ -38,6 +38,9 @@ class TestEmptyTree(unittest.TestCase):
     def test_closest_to(self):
         self.assertRaises(ValueError, lambda: self.empty_tree.closest_to(1, distance=None))
 
+    def test_height(self):
+        self.assertEqual(self.empty_tree.height, 0)
+
 
 class TestLeafBST(unittest.TestCase):
     def setUp(self) -> None:
@@ -87,6 +90,10 @@ class TestLeafBST(unittest.TestCase):
         spy_str_distance.return_value = 42
         self.assertEqual(self.leaf_foo.closest_to("bar", spy_str_distance), ("foo", 42))
         spy_str_distance.assert_called_once_with("bar", "foo")
+
+    def test_height(self):
+        self.assertEqual(self.leaf_one.height, 1)
+        self.assertEqual(self.leaf_foo.height, 1)
 
 
 class TestBST(unittest.TestCase):
@@ -187,6 +194,9 @@ class TestBST(unittest.TestCase):
         expected_calls_args = [mock.call(4, 3)]
         self.assertEqual(calls_args, expected_calls_args)
 
+    def test_height(self):
+        self.assertEqual(self.tree.height, 2)
+
     @staticmethod
     def float_distance(a, b):
         return abs(a - b)
@@ -240,6 +250,13 @@ class TestFromValues(unittest.TestCase):
     def test_from_seven_distinct_values(self):
         expected_bst = BST(4, BST(2, BST(1), BST(3)), BST(6, BST(5), BST(7)))
         self.assertEqual(BST.from_values([1, 2, 3, 4, 5, 6, 7 ]), expected_bst)
+
+
+class TestUnbalancedTree(unittest.TestCase):
+    tree = BST(10, None, BST(15, None, BST(20)))
+
+    def test_height(self):
+        self.assertEqual(self.tree.height, 3)
 
 
 if __name__ == '__main__':
