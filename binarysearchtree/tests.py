@@ -1,9 +1,10 @@
 import unittest
 from unittest import mock
 
-from bst import BST
-
-
+from binarysearchtree import BST
+from hypothesis import given, assume
+import hypothesis.strategies as st
+import typing as ty
 class TestEmptyTree(unittest.TestCase):
     def setUp(self) -> None:
         self.empty_tree = BST()
@@ -193,6 +194,53 @@ class TestBST(unittest.TestCase):
         calls_args = spy_float_distance.call_args_list
         expected_calls_args = [mock.call(4, 3)]
         self.assertEqual(calls_args, expected_calls_args)
+
+    def test_closest_greater_than_three_raises_error_with_empty_tree(self):
+        tree = BST()
+        self.assertRaises(ValueError, lambda: tree.closest_greater_than(3))
+
+    @given(st.integers(), st.integers())
+    def test_closest_greater_with_unary_tree_equals_its_value(self, tree_value: int, item: int):
+        unary_tree = BST(tree_value)
+        self.assertEqual(tree_value, unary_tree.closest_greater_than(item))
+
+    @given(st.lists(st.integers()), st.integers())
+    def test_closest_greater_than_is_greater_if_any_value_is_greater(self, values: ty.List[int], item: int):
+        assume(any((value >= item for value in values)))
+        tree = BST.from_values(values)
+        self.assertGreaterEqual(tree.closest_greater_than(item), item)
+
+    @given(st.lists(st.integers()), st.integers())
+    def test_closest_greater_than_is_the_minimal_greater_value(self, values: ty.List[int], item: int):
+        greater_values = list(filter(lambda x: x >= item, values))
+        assume(greater_values)
+        tree = BST.from_values(values)
+        self.assertEqual(min(greater_values), tree.closest_greater_than(item),
+                         msg=(item in tree))
+
+    @given(st.integers())
+    def test_closest_lesser_with_empty_tree_raises_exception(self, item):
+        bst = BST()
+        self.assertRaises(ValueError, lambda:bst.closest_lesser_than(item))
+
+    @given(st.integers(), st.integers())
+    def test_closest_lesser_with_unary_tree_equals_its_value(self, tree_value: int, item: int):
+        unary_tree = BST(tree_value)
+        self.assertEqual(tree_value, unary_tree.closest_lesser_than(item))
+
+    @given(st.lists(st.integers()), st.integers())
+    def test_closest_lesser_than_is_lesser_if_any_value_is_lesser(self, values: ty.List[int], item: int):
+        assume(any((value <= item for value in values)))
+        tree = BST.from_values(values)
+        self.assertLessEqual(tree.closest_lesser_than(item), item)
+
+    @given(st.lists(st.integers()), st.integers())
+    def test_closest_lesser_than_is_the_maximal_lesser_value(self, values: ty.List[int], item: int):
+        lesser_values = list(filter(lambda x: x <= item, values))
+        assume(lesser_values)
+        tree = BST.from_values(values)
+        self.assertEqual(max(lesser_values), tree.closest_lesser_than(item),
+                         msg=tree)
 
     def test_height(self):
         self.assertEqual(self.tree.height, 2)

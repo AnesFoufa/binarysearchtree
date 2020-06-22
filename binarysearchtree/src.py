@@ -1,6 +1,7 @@
 import typing as ty
 from functools import lru_cache
 __all__ = ["BST"]
+EMPTY_TREE_ERROR_MESSAGE = "Empty tree has no value."
 
 T = ty.TypeVar("T")
 U = ty.TypeVar("U")
@@ -137,14 +138,7 @@ class BST(ty.Generic[T]):
         :param item: object to search.
         :return: True if exists in the tree, False otherwise.
         """
-        if self.empty:
-            return False
-        elif item == self.value:
-            return True
-        elif item < self.value:
-            return item in self.left
-        else:
-            return item in self.right
+        return item in self.values
 
     @property
     @lru_cache(typed=True)
@@ -166,29 +160,55 @@ class BST(ty.Generic[T]):
         :return: A tuple whose first element is the closest value and the second the distance.
         """
         if self.empty:
-            raise ValueError("Empty tree has no value.")
-        elif item <= self.value:
-            if self.left.empty:
-                return self.value, distance(item, self.value)
-            elif item <= self.left.value:
-                return self.left.closest_to(item, distance)
-            else:
-                distance_with_current = distance(item, self.value)
-                closest_left, distance_with_closest_left = self.left.closest_to(item, distance)
-                if distance_with_current < distance_with_closest_left:
-                    return self.value, distance_with_current
-                return closest_left, distance_with_closest_left
+            raise ValueError(EMPTY_TREE_ERROR_MESSAGE)
+        if item in self:
+            return item, distance(item, item)
+        if (item < self.value and self.left.empty) or (item > self.value and self.right.empty):
+            return self.value, distance(item, self.value)
+        if item < self.value and item <= self.left.value:
+            return self.left.closest_to(item, distance)
+        if item > self.value and item > self.right.value:
+            return self.right.closest_to(item, distance)
+        if item < self.value:
+            other = self.left
         else:
-            if self.right.empty:
-                return self.value, distance(item, self.value)
-            elif item > self.right.value:
-                return self.right.closest_to(item, distance)
-            else:
-                distance_with_current = distance(item, self.value)
-                closest_right, distance_with_closest_right = self.right.closest_to(item, distance)
-                if distance_with_current < distance_with_closest_right:
-                    return self.value, distance_with_current
-                return closest_right, distance_with_closest_right
+            other = self.right
+        distance_with_current = distance(item, self.value)
+        closest_other, distance_with_closest_other = other.closest_to(item, distance)
+        if distance_with_current <= distance_with_closest_other:
+            return self.value, distance_with_current
+        else:
+            return closest_other, distance_with_closest_other
+
+    @lru_cache(typed=True)
+    def closest_greater_than(self, value: T) -> T:
+        if self.empty:
+            raise ValueError(EMPTY_TREE_ERROR_MESSAGE)
+        current_value_is_the_closest = (value <= self.value and self.left.empty) or \
+                                       (value >= self.value and self.right.empty) or \
+                                       (self.value >= value > self.left.closest_greater_than(value))
+
+        if current_value_is_the_closest:
+            return self.value
+        if value < self.value:
+            return self.left.closest_greater_than(value)
+        else:
+            return self.right.closest_greater_than(value)
+
+    @lru_cache(typed=True)
+    def closest_lesser_than(self, value: T) -> T:
+        if self.empty:
+            raise ValueError(EMPTY_TREE_ERROR_MESSAGE)
+
+        current_value_is_the_closest = (value >= self.value and self.right.empty) or \
+                                       (value <= self.value and self.left.empty) or \
+                                       (self.value <= value < self.right.closest_lesser_than(value))
+        if current_value_is_the_closest:
+            return self.value
+        if value < self.value:
+            return self.left.closest_lesser_than(value)
+        else:
+            return self.right.closest_lesser_than(value)
 
     def __eq__(self, other: 'BST[T]') -> bool:
         return type(self) == type(other) and self.value == other.value and self._left == other._left and \
